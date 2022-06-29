@@ -1,6 +1,6 @@
-# get-ci
+# model-table
 
-Your Pollination app!
+An app to extract zone data from a honeybee-model in the CSV format.
 
 ## Quickstart
 
@@ -31,13 +31,13 @@ You can run the app locally inside Docker to ensure the app will work fine after
 You need to install Docker on your machine in order to be able to run this command
 
 ```
-> pollination-apps run app  --name "get-ci"
+> pollination-apps run app ladybug-tools --name "model-table"
 ```
 
 ## Deploy to Pollination
 
 ```
-> pollination-apps deploy app --name "get-ci" --public --api-token "Your api token from Pollination"
+> pollination-apps deploy app --name "model-table" --public --api-token "Your api token from Pollination"
 ```
 
 
@@ -72,6 +72,6 @@ In order to configure github actions to deploy your app you will need to:
 
    **Note** that the commit messages with only `fix` and `feat` type will trigger a deployment to Pollination.
 
-Github actions will then package and deploy your code to an app called [get-ci](https://app.pollination.cloud//applications/get-ci)
+Github actions will then package and deploy your code to an app called [model-table](https://app.pollination.cloud/ladybug-tools/applications/model-table)
 
 
