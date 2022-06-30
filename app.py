@@ -10,11 +10,13 @@ import revit
 from pandas import DataFrame
 from pathlib import Path
 from typing import List
+from math import degrees
 
 from pollination_streamlit_io import get_host
 from honeybee.model import Model as HBModel
 from honeybee.face import Face
 from honeybee.room import Room
+from ladybug_geometry.geometry2d.pointvector import Vector2D
 
 
 def get_wwr(faces: List[Face]) -> float:
@@ -60,22 +62,36 @@ def add_wwr(room: Room, model_dict: dict) -> None:
     for face in room.faces:
         if face.normal.z == 1:
             room_dict['t']['faces'].append(face)
-        elif face.normal.x == 1:
-            room_dict['e']['faces'].append(face)
-        elif face.normal.x == -1:
-            room_dict['w']['faces'].append(face)
-        elif face.normal.y == 1:
-            room_dict['n']['faces'].append(face)
-        elif face.normal.y == -1:
-            room_dict['s']['faces'].append(face)
-        elif 0 < face.normal.x < 1 and 0 < face.normal.y < 1:
-            room_dict['ne']['faces'].append(face)
-        elif 0 < face.normal.x < 1 and face.normal.y < 0:
-            room_dict['se']['faces'].append(face)
-        elif face.normal.x < 0 and face.normal.y < 0:
-            room_dict['sw']['faces'].append(face)
-        elif face.normal.x < 0 and 0 < face.normal.y < 1:
-            room_dict['nw']['faces'].append(face)
+        elif face.normal.z == -1:
+            continue
+        else:
+            ref_vec = Vector2D(0, 1)
+            vec = Vector2D(face.normal.x, face.normal.y)
+            angle = degrees(ref_vec.angle_clockwise(vec))
+
+            if angle <= 22.5 or angle >= 337.5:
+                room_dict['n']['faces'].append(face)
+
+            elif 22.5 < angle <= 67.5:
+                room_dict['ne']['faces'].append(face)
+
+            elif 67.5 < angle <= 112.5:
+                room_dict['e']['faces'].append(face)
+
+            elif 112.5 < angle <= 157.5:
+                room_dict['se']['faces'].append(face)
+
+            elif 157.5 < angle <= 202.5:
+                room_dict['s']['faces'].append(face)
+
+            elif 202.5 < angle <= 247.5:
+                room_dict['sw']['faces'].append(face)
+
+            elif 247.5 < angle <= 292.5:
+                room_dict['w']['faces'].append(face)
+
+            elif 292.5 < angle < 337.5:
+                room_dict['nw']['faces'].append(face)
 
     for key, val in room_dict.items():
         if val['faces']:
