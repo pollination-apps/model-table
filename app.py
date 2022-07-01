@@ -187,7 +187,13 @@ def main():
     
     data = get_hbjson('get-hbjson')
     if data:
-        model_data = json.loads(data)
+        if type(data) is not dict:
+            model_data = json.loads(data)
+        else:
+            model_data = data
+        if 'hbjson' in model_data:
+          model_data = model_data.hbjson
+
         hb_model = HBModel.from_dict(model_data)
         if hb_model:
             hbjson_path = st.session_state.temp_folder.joinpath(f'{hb_model.identifier}.hbjson')
