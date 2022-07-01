@@ -96,7 +96,6 @@ def add_wwr(room: Room, model_dict: dict) -> None:
     for key, val in room_dict.items():
         if val['faces']:
             wwr = get_wwr(val['faces'])
-            print(wwr)
             if wwr > 0:
                 model_dict[val['key']].append(wwr)
             else:
