@@ -3,16 +3,16 @@
 import streamlit as st
 import tempfile
 
+import json
+
 import web
-import rhino
-import revit
 
 from pandas import DataFrame
 from pathlib import Path
 from typing import List
 from math import degrees
 
-from pollination_streamlit_io import get_host
+from pollination_streamlit_io import (get_host, get_hbjson)
 from honeybee.model import Model as HBModel
 from honeybee.face import Face
 from honeybee.room import Room
@@ -96,7 +96,6 @@ def add_wwr(room: Room, model_dict: dict) -> None:
     for key, val in room_dict.items():
         if val['faces']:
             wwr = get_wwr(val['faces'])
-            print(wwr)
             if wwr > 0:
                 model_dict[val['key']].append(wwr)
             else:
@@ -165,27 +164,38 @@ def main():
         st.session_state.temp_folder = Path(tempfile.mkdtemp())
 
     # web
-    if host.lower() == 'web':
+    # if host.lower() == 'web':
 
-        hbjson_file = st.file_uploader(
-            'Upload an HBJSON file.', type='hbjson', key='upload_hbjson')
+    #     hbjson_file = st.file_uploader(
+    #         'Upload an HBJSON file.', type='hbjson', key='upload_hbjson')
 
-        if hbjson_file:
-            hbjson_path = st.session_state.temp_folder.joinpath(hbjson_file.name)
-            hbjson_path.write_bytes(hbjson_file.read())
-            web.show_model(hbjson_path)
-            st.session_state.hbjson_path = hbjson_path
+    #     if hbjson_file:
+    #         hbjson_path = st.session_state.temp_folder.joinpath(hbjson_file.name)
+    #         hbjson_path.write_bytes(hbjson_file.read())
+    #         web.show_model(hbjson_path)
+    #         st.session_state.hbjson_path = hbjson_path
 
     # rhino
-    elif host.lower() == 'rhino':
-        hbjson_path = rhino.get_model(st.session_state.temp_folder)
-        st.session_state.hbjson_path = hbjson_path
+    # elif host.lower() == 'rhino':
+    #     hbjson_path = rhino.get_model(st.session_state.temp_folder)
+    #     st.session_state.hbjson_path = hbjson_path
 
-    # revit
-    elif host.lower() == 'revit':
-        hbjson_path = revit.get_model(st.session_state.temp_folder)
-        st.session_state.hbjson_path = hbjson_path
-
+    # # revit
+    # elif host.lower() == 'revit':
+    #     hbjson_path = revit.get_model(st.session_state.temp_folder)
+    #     st.session_state.hbjson_path = hbjson_path
+    
+    data = get_hbjson('get-hbjson')
+    if data:
+        model_data = json.loads(data)
+        hb_model = HBModel.from_dict(model_data)
+        if hb_model:
+            hbjson_path = st.session_state.temp_folder.joinpath(f'{hb_model.identifier}.hbjson')
+            hbjson_path.write_text(json.dumps(hb_model.to_dict()))
+            st.session_state.hbjson_path = hbjson_path
+            if host == 'web' :
+                web.show_model(hbjson_path)
+      
     # table
     if 'hbjson_path' in st.session_state and st.session_state.hbjson_path:
         df = get_dataframe(st.session_state.hbjson_path)
