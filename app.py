@@ -163,37 +163,9 @@ def main():
     if 'temp_folder' not in st.session_state:
         st.session_state.temp_folder = Path(tempfile.mkdtemp())
 
-    # web
-    # if host.lower() == 'web':
-
-    #     hbjson_file = st.file_uploader(
-    #         'Upload an HBJSON file.', type='hbjson', key='upload_hbjson')
-
-    #     if hbjson_file:
-    #         hbjson_path = st.session_state.temp_folder.joinpath(hbjson_file.name)
-    #         hbjson_path.write_bytes(hbjson_file.read())
-    #         web.show_model(hbjson_path)
-    #         st.session_state.hbjson_path = hbjson_path
-
-    # rhino
-    # elif host.lower() == 'rhino':
-    #     hbjson_path = rhino.get_model(st.session_state.temp_folder)
-    #     st.session_state.hbjson_path = hbjson_path
-
-    # # revit
-    # elif host.lower() == 'revit':
-    #     hbjson_path = revit.get_model(st.session_state.temp_folder)
-    #     st.session_state.hbjson_path = hbjson_path
-    
     data = get_hbjson('get-hbjson')
     if data:
-        if type(data) is not dict:
-            model_data = json.loads(data)
-        else:
-            model_data = data
-        if 'hbjson' in model_data:
-          model_data = model_data.hbjson
-
+        model_data = json.loads(data['hbjson'])
         hb_model = HBModel.from_dict(model_data)
         if hb_model:
             hbjson_path = st.session_state.temp_folder.joinpath(f'{hb_model.identifier}.hbjson')
