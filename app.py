@@ -165,10 +165,7 @@ def main():
 
     data = get_hbjson('get-hbjson')
     if data:
-        if type(data['hbjson']) is not dict:
-          model_data = json.loads(data['hbjson'])
-        else :
-          model_data = data['hbjson']
+        model_data = data['hbjson']
         
         hb_model = HBModel.from_dict(model_data)
         if hb_model:
