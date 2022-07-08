@@ -1,5 +1,5 @@
 pollination-streamlit>=0.2.1
-pollination-streamlit-io>=0.30.9
+pollination-streamlit-io==0.30.9
 pollination-streamlit-viewer>=0.4.0
 honeybee-vtk >=0.38.0
 pandas>=1.3
