@@ -4,15 +4,15 @@ import streamlit as st
 import tempfile
 
 import json
+import math
 
 import web
 
 from pandas import DataFrame
 from pathlib import Path
 from typing import List
-from math import degrees
 
-from pollination_streamlit_io import (get_host, get_hbjson)
+from pollination_streamlit_io import get_host, get_hbjson
 from honeybee.model import Model as HBModel
 from honeybee.face import Face, Outdoors
 from honeybee.room import Room
@@ -32,7 +32,7 @@ def get_wwr(faces: List[Face]) -> float:
     return sum(f.aperture_ratio for f in faces)
 
 
-def add_wwr(room: Room, model_dict: dict) -> None:
+def add_wwr(room: Room, model_dict: dict, north_vector: Vector2D) -> None:
     """Add WWR to the model_dict.
 
     Args:
@@ -52,6 +52,7 @@ def add_wwr(room: Room, model_dict: dict) -> None:
     }
 
     for face in room.faces:
+        face: Face
         if not isinstance(face.boundary_condition, Outdoors):
             continue
         if face.normal.z == 1:
@@ -59,10 +60,7 @@ def add_wwr(room: Room, model_dict: dict) -> None:
         elif face.normal.z == -1:
             continue
         else:
-            ref_vec = Vector2D(0, 1)
-            vec = Vector2D(face.normal.x, face.normal.y)
-            angle = degrees(ref_vec.angle_clockwise(vec))
-
+            angle = face.horizontal_orientation(north_vector=north_vector)
             if angle <= 22.5 or angle >= 337.5:
                 room_dict['n']['faces'].append(face)
 
@@ -98,11 +96,11 @@ def add_wwr(room: Room, model_dict: dict) -> None:
             model_dict[val['key']].append(0)
 
 
-def get_dataframe(model: HBModel) -> DataFrame:
+def get_dataframe(model: HBModel, north_vector: Vector2D) -> DataFrame:
     """Extract model data as a Pandas Dataframe.
 
-    This function generates a Pandas Dataframe from a selected number of properties
-    of the rooms in the model.
+    This function generates a Pandas Dataframe from a selected number of
+    properties of the rooms in the model.
 
     Args:
         model: A valid Honeybee model
@@ -139,7 +137,7 @@ def get_dataframe(model: HBModel) -> DataFrame:
         model_dict[f'exterior-aperture-area ({units_short}2)'].append(room.exterior_aperture_area)
         model_dict[f'exterior-skylight-aperture-area ({units_short}2)'].append(
             room.exterior_skylight_aperture_area)
-        add_wwr(room, model_dict)
+        add_wwr(room, model_dict, north_vector)
 
     return DataFrame.from_dict(model_dict)
 
@@ -148,10 +146,10 @@ def main():
 
     st.title('Facade Area Takeoff')
     st.info(
-        'This app extracts window to wall ratio for the exterior facade of the input '
-        'model and provides a breakdown per orientation. You must ensure that the '
-        'adjacency between the rooms have been set correctly. Otherwise the area of the '
-        'interior windows will also be included in the calculation.'
+        'This app calculates the window-to-wall ratio for the exterior facade of '
+        'the input model and provides a breakdown per orientation. You must ensure '
+        'that the adjacency between the rooms is solved correctly. Otherwise, the '
+        'values also includes the interior windows.'
     )
 
     # Get host
@@ -179,9 +177,18 @@ def main():
     if hb_model:
 
         st.markdown('## 2. Review the data')
-        units = st.selectbox('Select report units', options=UNITS)
+        c1, c2 = st.columns(2)
+        units = c1.selectbox('Select report units', options=UNITS)
+        north_angle = c2.number_input(
+            'North Rotation', min_value=-360.0, max_value=360.0, value=0.0, step= 0.5,
+            help='The counterclockwise difference between true North and the Y-axis in '
+            'degrees: 90: West, -90: East.'
+        )
+        north_vector = Vector2D(0, 1)
+        if north_angle != 0:
+            north_vector = north_vector.rotate(math.radians(north_angle))
         hb_model.convert_to_units(units)
-        df = get_dataframe(hb_model)
+        df = get_dataframe(hb_model, north_vector)
         st.dataframe(df)
 
         if len(df.columns) > 0:
